@@ -1,0 +1,54 @@
+# Maintainer: levinit <levinit@outlook.com>
+
+pkgname=zh-cn-traditional-locale
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Linux locale variant zh_CN@traditional with automatic pacman hook and dynamic conversion engine"
+arch=('any')
+url="https://github.com/levinit/zh-cn-traditional-locale"
+license=('GPL-3.0-or-later')
+depends=('gettext' 'opencc' 'python')
+makedepends=('git')
+conflicts=("${pkgname}-git")
+replaces=("${pkgname}-git")
+backup=('etc/zh-cn-traditional/overrides.tsv')
+install="${pkgname}.install"
+
+# 自動判定：當處於本地源碼倉庫（且非生成 AUR .SRCINFO 元數據階段）時，直接使用當前工作區構建；否則從遠程 Git 克隆
+if [ "${PRINTSRCINFO:-0}" != "1" ] && { [ "${LOCAL_BUILD:-0}" = "1" ] || [ -f "${startdir}/../../bin/zh-cn-traditional-sync" ]; }; then
+    _is_local=1
+    source=()
+    sha256sums=()
+else
+    _is_local=0
+    source=("${pkgname}::git+https://github.com/levinit/zh-cn-traditional-locale.git")
+    sha256sums=('SKIP')
+fi
+
+pkgver() {
+    if [ "${_is_local}" = "1" ]; then
+        cd "${startdir}/../.."
+    else
+        cd "${pkgname}"
+    fi
+    ( set -o pipefail
+      git describe --long --tags --abbrev=7 2>/dev/null | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+      printf "%s.r%s.%s" "${pkgver%%.r*}" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+    )
+}
+
+build() {
+    if [ "${_is_local}" = "1" ]; then
+        make -C "${startdir}/../.." build
+    else
+        make -C "${pkgname}" build
+    fi
+}
+
+package() {
+    if [ "${_is_local}" = "1" ]; then
+        make -C "${startdir}/../.." install DESTDIR="${pkgdir}" PREFIX=/usr HOOK_ALPM=yes
+    else
+        make -C "${pkgname}" install DESTDIR="${pkgdir}" PREFIX=/usr HOOK_ALPM=yes
+    fi
+}

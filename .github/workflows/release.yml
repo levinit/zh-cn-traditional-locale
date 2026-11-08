@@ -1,0 +1,59 @@
+name: Release Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies (DEB & RPM)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make gettext opencc python3 python3-opencc rpm
+
+      - name: Run verification gate
+        run: make verify
+
+      - name: Build DEB package
+        run: make deb
+
+      - name: Build RPM package
+        run: make rpm
+
+      - name: Build Arch Linux package
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work archlinux:latest bash -c "
+            pacman -Syu --noconfirm --needed base-devel git opencc gettext python &&
+            useradd -m builder &&
+            chown -R builder:builder /work &&
+            su builder -c 'make arch'
+          "
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd dist
+          sha256sum *.deb *.rpm */*.rpm *.pkg.tar.* > sha256sums.txt
+          cat sha256sums.txt
+          cd ..
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.deb
+            dist/**/*.rpm
+            dist/*.pkg.tar.*
+            dist/sha256sums.txt
+          generate_release_notes: true

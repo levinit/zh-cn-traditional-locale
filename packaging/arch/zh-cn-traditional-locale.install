@@ -1,0 +1,85 @@
+_sync_locale() {
+    needs_gen=0
+    if [ -f /etc/locale.gen ]; then
+        if grep -qE '^[[:space:]]*#[[:space:]]*zh_CN@traditional[[:space:]]+UTF-8' /etc/locale.gen; then
+            sed -i 's/^[[:space:]]*#[[:space:]]*\(zh_CN@traditional[[:space:]]\+UTF-8\)/\1/' /etc/locale.gen
+            needs_gen=1
+        elif ! grep -qE '^[[:space:]]*zh_CN@traditional[[:space:]]+UTF-8' /etc/locale.gen; then
+            echo "zh_CN@traditional UTF-8" >> /etc/locale.gen
+            needs_gen=1
+        fi
+    fi
+
+    if ! locale -a 2>/dev/null | grep -qE '^zh_CN(\.utf8)?@traditional$'; then
+        needs_gen=1
+    fi
+
+    if [ "$needs_gen" -eq 1 ]; then
+        if command -v locale-gen >/dev/null 2>&1; then
+            locale-gen
+        elif command -v localedef >/dev/null 2>&1; then
+            localedef -i zh_CN@traditional -c -f UTF-8 zh_CN@traditional || true
+        fi
+    fi
+
+    if command -v zh-cn-traditional-sync >/dev/null 2>&1; then
+        echo "=== 正在全量同步系統現有 zh_CN 翻譯至 zh_CN@traditional ==="
+        # 安裝只同步 MO，不同步桌面快捷方式：桌面是用戶級操作，
+        # 應由用戶本人運行 --desktop，避免 root 家目錄問題。
+        zh-cn-traditional-sync --all --no-desktop || true
+    fi
+}
+
+post_install() {
+    _sync_locale
+
+    cat << 'EOF'
+========================================================================
+[zh_CN@traditional] 變體已安裝並完成 locale 生成！
+
+1. 啓用繁體字形 + 大陸術語（在 ~/.profile、~/.bashrc 或桌面環境中配置）：
+     export LANG=zh_CN@traditional
+     export LANGUAGE=zh_CN@traditional
+
+2. 平常維護與手動同步：
+   - 系統已內置包管理器自動鉤子，安裝/更新軟件時會自動增量轉換；
+   - 如需手動觸發全量重新同步或單獨轉換指定軟件，可隨時運行：
+     zh-cn-traditional-sync --all          # 全量同步系統所有組件
+     zh-cn-traditional-sync <組件名>...     # 例如: zh-cn-traditional-sync git baobab
+
+注：未覆蓋的軟件翻譯將自動安全回退到簡體 zh_CN。
+注：安裝不自動同步桌面快捷方式，如需請以普通用戶身份運行 zh-cn-traditional-sync --desktop -y。
+========================================================================
+EOF
+}
+
+post_upgrade() {
+    _sync_locale
+}
+
+post_remove() {
+    needs_gen=0
+    if [ -f /etc/locale.gen ]; then
+        if grep -qE '^[[:space:]]*zh_CN@traditional[[:space:]]+UTF-8' /etc/locale.gen; then
+            sed -i '/^[[:space:]]*zh_CN@traditional[[:space:]]\+UTF-8/d' /etc/locale.gen
+            needs_gen=1
+        fi
+    fi
+
+    if locale -a 2>/dev/null | grep -qE '^zh_CN(\.utf8)?@traditional$'; then
+        if command -v localedef >/dev/null 2>&1; then
+            localedef --delete-from-archive zh_CN@traditional zh_CN.utf8@traditional 2>/dev/null || true
+        fi
+        if locale -a 2>/dev/null | grep -qE '^zh_CN(\.utf8)?@traditional$'; then
+            needs_gen=1
+        else
+            needs_gen=0
+        fi
+    fi
+
+    if [ "$needs_gen" -eq 1 ] && command -v locale-gen >/dev/null 2>&1; then
+        locale-gen
+    fi
+
+    rm -rf /usr/share/locale/zh_CN@traditional
+}

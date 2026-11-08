@@ -1,0 +1,30 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: zh-cn-traditional-locale
+Upstream-Contact: levinit <levinit@outlook.com>
+Source: https://github.com/levinit/zh-cn-traditional-locale
+
+Files: *
+Copyright: 2026 levinit
+License: GPL-3.0-or-later
+
+Files: i18n/locales/zh_CN@traditional
+Copyright: Free Software Foundation, Inc.
+           2026 levinit
+License: LGPL-2.1-or-later or GPL-2.0-or-later
+
+License: GPL-3.0-or-later
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
+
+License: LGPL-2.1-or-later
+ On Debian systems, the complete text of the GNU Lesser General
+ Public License version 2.1 can be found in "/usr/share/common-licenses/LGPL-2.1".
+
+License: GPL-2.0-or-later
+ On Debian systems, the complete text of the GNU General
+ Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".

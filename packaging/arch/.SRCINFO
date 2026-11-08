@@ -1,0 +1,19 @@
+pkgbase = zh-cn-traditional-locale
+	pkgdesc = Linux locale variant zh_CN@traditional with automatic pacman hook and dynamic conversion engine
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://github.com/levinit/zh-cn-traditional-locale
+	install = zh-cn-traditional-locale.install
+	arch = any
+	license = GPL-3.0-or-later
+	makedepends = git
+	depends = gettext
+	depends = opencc
+	depends = python
+	conflicts = zh-cn-traditional-locale-git
+	replaces = zh-cn-traditional-locale-git
+	backup = etc/zh-cn-traditional/overrides.tsv
+	source = zh-cn-traditional-locale::git+https://github.com/levinit/zh-cn-traditional-locale.git
+	sha256sums = SKIP
+
+pkgname = zh-cn-traditional-locale

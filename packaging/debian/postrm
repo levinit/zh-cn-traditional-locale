@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
+    needs_gen=0
+    if [ -f /etc/locale.gen ]; then
+        if grep -qE '^[[:space:]]*zh_CN@traditional[[:space:]]+UTF-8' /etc/locale.gen; then
+            sed -i '/^[[:space:]]*zh_CN@traditional[[:space:]]\+UTF-8/d' /etc/locale.gen
+            needs_gen=1
+        fi
+    fi
+
+    if locale -a 2>/dev/null | grep -qE '^zh_CN(\.utf8)?@traditional$'; then
+        if command -v localedef >/dev/null 2>&1; then
+            localedef --delete-from-archive zh_CN@traditional zh_CN.utf8@traditional 2>/dev/null || true
+        fi
+        if locale -a 2>/dev/null | grep -qE '^zh_CN(\.utf8)?@traditional$'; then
+            needs_gen=1
+        else
+            needs_gen=0
+        fi
+    fi
+
+    if [ "$needs_gen" -eq 1 ] && command -v locale-gen >/dev/null 2>&1; then
+        locale-gen
+    fi
+
+    rm -rf /usr/share/locale/zh_CN@traditional
+fi
+
+#DEBHELPER#
+exit 0

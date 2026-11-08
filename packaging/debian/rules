@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_build:
+	$(MAKE) -C ../.. build
+
+override_dh_auto_install:
+	$(MAKE) -C ../.. install DESTDIR=debian/zh-cn-traditional-locale PREFIX=/usr HOOK_ALPM=no

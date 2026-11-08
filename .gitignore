@@ -1,0 +1,22 @@
+# 運行時動態生成目錄
+zh_CN@traditional/
+po/
+*.mo
+*.qm
+
+# 臨時文件與緩存
+*~
+*.swp
+*.swo
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# 發行版打包產物與臨時構建目錄
+*.pkg.tar.*
+*.deb
+*.rpm
+*.apk
+pkg/
+src/
+dist/

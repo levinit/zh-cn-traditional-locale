@@ -1,0 +1,61 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    needs_gen=0
+    if [ -f /etc/locale.gen ]; then
+        if grep -qE '^[[:space:]]*#[[:space:]]*zh_CN@traditional[[:space:]]+UTF-8' /etc/locale.gen; then
+            sed -i 's/^[[:space:]]*#[[:space:]]*\(zh_CN@traditional[[:space:]]\+UTF-8\)/\1/' /etc/locale.gen
+            needs_gen=1
+        elif ! grep -qE '^[[:space:]]*zh_CN@traditional[[:space:]]+UTF-8' /etc/locale.gen; then
+            echo "zh_CN@traditional UTF-8" >> /etc/locale.gen
+            needs_gen=1
+        fi
+    fi
+
+    if ! locale -a 2>/dev/null | grep -qE '^zh_CN(\.utf8)?@traditional$'; then
+        needs_gen=1
+    fi
+
+    if [ "$needs_gen" -eq 1 ]; then
+        if command -v locale-gen >/dev/null 2>&1; then
+            locale-gen
+        elif command -v localedef >/dev/null 2>&1; then
+            localedef -i zh_CN@traditional -c -f UTF-8 zh_CN@traditional || true
+        fi
+    fi
+
+    if command -v zh-cn-traditional-sync >/dev/null 2>&1; then
+        # 安裝/升級本包：全量同步 MO，不同步桌面快捷方式。
+        zh-cn-traditional-sync --all --quiet --no-desktop || true
+    fi
+
+    if [ -z "$2" ]; then
+        cat << 'EOF'
+========================================================================
+[zh_CN@traditional] 已成功安裝並完成 locale 生成！
+
+1. 啓用繁體字形 + 大陸術語（在 ~/.profile 或 ~/.bashrc 中配置）：
+     export LANG=zh_CN@traditional
+     export LANGUAGE=zh_CN@traditional
+
+2. 平常維護與手動同步：
+   - 系統已內置包管理器自動觸發器，安裝/更新軟件時會自動刷新；
+   - 如需手動觸發全量重新同步或單獨轉換指定軟件，可隨時運行：
+     zh-cn-traditional-sync --all          # 全量同步系統所有組件
+     zh-cn-traditional-sync <組件名>...     # 例如: zh-cn-traditional-sync git baobab
+
+注：未覆蓋的軟件翻譯將自動安全回退到簡體 zh_CN。
+注：安裝不自動同步桌面快捷方式，如需請以普通用戶身份運行 zh-cn-traditional-sync --desktop -y。
+========================================================================
+EOF
+    fi
+elif [ "$1" = "triggered" ]; then
+    # 其他軟件包變更 zh_CN MO 時：僅增量同步過期/缺失組件（dpkg 路徑觸發器無文件列表）。
+    if command -v zh-cn-traditional-sync >/dev/null 2>&1; then
+        zh-cn-traditional-sync --outdated --quiet --no-desktop || true
+    fi
+fi
+
+#DEBHELPER#
+exit 0

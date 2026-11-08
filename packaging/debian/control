@@ -1,0 +1,16 @@
+Source: zh-cn-traditional-locale
+Section: localization
+Priority: optional
+Maintainer: levinit <levinit@outlook.com>
+Build-Depends: debhelper-compat (= 13), make
+Standards-Version: 4.6.2
+Homepage: https://github.com/levinit/zh-cn-traditional-locale
+
+Package: zh-cn-traditional-locale
+Architecture: all
+Depends: ${misc:Depends}, gettext, opencc, python3, python3-opencc
+Recommends: locales
+Description: Linux locale variant zh_CN@traditional
+ A Linux Chinese locale variant (zh_CN@traditional) providing
+ Traditional Chinese glyphs while maintaining Mainland China terminology
+ and conventions, with automatic dpkg triggers and dynamic conversion engine.
